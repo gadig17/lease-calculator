@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>Lease Calculator</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f1a;--surface:#1a1a2e;--surface2:#252540;--border:#333355;
+  --text:#e8e8f0;--text-muted:#8888aa;--accent:#6c63ff;--accent-glow:#6c63ff44;
+  --green:#22c55e;--yellow:#eab308;--red:#ef4444;--orange:#f97316;
+  --radius:12px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+@media(prefers-color-scheme:light){
+  :root{
+    --bg:#f0f0f5;--surface:#ffffff;--surface2:#f5f5fa;--border:#d0d0e0;
+    --text:#1a1a2e;--text-muted:#666680;--accent:#5b52e0;--accent-glow:#5b52e044;
+  }
+}
+html{font-size:16px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+  min-height:100dvh;padding:0 0 80px;-webkit-tap-highlight-color:transparent}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:16px 20px;position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+header h1{font-size:1.25rem;font-weight:700;letter-spacing:-0.02em}
+header p{font-size:0.8rem;color:var(--text-muted);margin-top:2px}
+
+.container{max-width:480px;margin:0 auto;padding:16px}
+
+.score-card{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;margin-bottom:16px;
+  text-align:center;position:relative;overflow:hidden}
+.score-card::before{content:'';position:absolute;top:0;left:0;right:0;
+  height:4px;background:var(--score-color,var(--accent))}
+.score-label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--text-muted);margin-bottom:4px}
+.score-value{font-size:2.5rem;font-weight:800;color:var(--score-color,var(--accent));
+  line-height:1}
+.score-desc{font-size:0.85rem;color:var(--text-muted);margin-top:6px}
+
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.metric{background:var(--surface2);border-radius:8px;padding:12px;text-align:center}
+.metric-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--text-muted);margin-bottom:4px}
+.metric-value{font-size:1.1rem;font-weight:700}
+.metric-value.good{color:var(--green)}
+.metric-value.fair{color:var(--yellow)}
+.metric-value.poor{color:var(--red)}
+
+.section{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.section-header{padding:14px 16px;font-weight:600;font-size:0.9rem;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;-webkit-user-select:none}
+.section-header .toggle{font-size:1.2rem;color:var(--text-muted);
+  transition:transform 0.2s}
+.section.collapsed .toggle{transform:rotate(-90deg)}
+.section-body{padding:4px 16px 16px}
+.section.collapsed .section-body{display:none}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:0.75rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);
+  margin-bottom:6px}
+.input-wrap{position:relative}
+.input-wrap .prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--text-muted);font-size:0.9rem;pointer-events:none}
+.input-wrap .suffix{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  color:var(--text-muted);font-size:0.8rem;pointer-events:none}
+input[type="number"],input[type="text"]{
+  width:100%;padding:12px 12px;font-size:1rem;font-family:var(--font);
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);outline:none;
+  -moz-appearance:textfield;transition:border-color 0.15s}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.has-prefix input{padding-left:28px}
+.has-suffix input{padding-right:40px}
+
+.quick-buttons{display:flex;gap:6px;margin-top:6px}
+.quick-btn{flex:1;padding:8px 4px;font-size:0.8rem;font-weight:600;
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);cursor:pointer;transition:all 0.15s;font-family:var(--font)}
+.quick-btn:active,.quick-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px}
+.toggle-row label{margin-bottom:0}
+.toggle-switch{position:relative;width:44px;height:24px}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-switch .slider{position:absolute;cursor:pointer;inset:0;
+  background:var(--surface2);border:1px solid var(--border);border-radius:24px;
+  transition:0.2s}
+.toggle-switch .slider::before{content:'';position:absolute;height:18px;width:18px;
+  left:2px;bottom:2px;background:var(--text-muted);border-radius:50%;transition:0.2s}
+.toggle-switch input:checked+.slider{background:var(--accent);border-color:var(--accent)}
+.toggle-switch input:checked+.slider::before{transform:translateX(20px);background:#fff}
+
+.breakdown{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.breakdown h3{font-size:0.85rem;font-weight:600;margin-bottom:12px}
+.breakdown-row{display:flex;justify-content:space-between;padding:6px 0;
+  font-size:0.85rem;border-bottom:1px solid var(--border)}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row.total{font-weight:700;font-size:0.95rem;border-top:2px solid var(--border);
+  margin-top:4px;padding-top:10px}
+.breakdown-row .label{color:var(--text-muted)}
+.breakdown-row.total .label{color:var(--text)}
+
+.tips{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.tips h3{font-size:0.85rem;font-weight:600;margin-bottom:10px}
+.tip{font-size:0.8rem;color:var(--text-muted);padding:6px 0 6px 20px;
+  position:relative;line-height:1.4}
+.tip::before{content:'';position:absolute;left:0;top:12px;
+  width:8px;height:8px;border-radius:50%;background:var(--accent)}
+
+.compare-bar{position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:12px 20px;display:flex;gap:10px;justify-content:center;z-index:100}
+.compare-btn{padding:10px 20px;border-radius:8px;border:1px solid var(--border);
+  font-size:0.85rem;font-weight:600;cursor:pointer;font-family:var(--font);
+  background:var(--surface2);color:var(--text);transition:all 0.15s}
+.compare-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.compare-btn:active{transform:scale(0.97)}
+
+.saved-deals{margin-bottom:12px}
+.saved-deal{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;
+  display:flex;justify-content:space-between;align-items:center}
+.saved-deal .deal-info{flex:1}
+.saved-deal .deal-name{font-weight:600;font-size:0.9rem}
+.saved-deal .deal-details{font-size:0.75rem;color:var(--text-muted);margin-top:2px}
+.saved-deal .deal-score{font-size:1.3rem;font-weight:800;margin-left:12px}
+.saved-deal .deal-actions{display:flex;gap:6px;margin-left:12px}
+.saved-deal .deal-actions button{background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:6px 10px;font-size:0.7rem;cursor:pointer;
+  color:var(--text-muted);font-family:var(--font)}
+.saved-deal .deal-actions button:active{background:var(--accent);color:#fff}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Lease Deal Evaluator</h1>
+  <p>Florida &middot; Calculate &middot; Compare &middot; Negotiate</p>
+</header>
+
+<div class="container">
+
+  <div class="score-card" id="scoreCard">
+    <div class="score-label">Deal Rating</div>
+    <div class="score-value" id="scoreValue">--</div>
+    <div class="score-desc" id="scoreDesc">Enter deal details below</div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Monthly Payment</div>
+        <div class="metric-value" id="metricPayment">$--</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">% of MSRP</div>
+        <div class="metric-value" id="metricPercent">--%</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Effective APR</div>
+        <div class="metric-value" id="metricAPR">--%</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Total Cost</div>
+        <div class="metric-value" id="metricTotal">$--</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="saved-deals" id="savedDeals"></div>
+
+  <div class="section" id="sectionVehicle">
+    <div class="section-header" onclick="toggleSection('sectionVehicle')">
+      Vehicle &amp; Price <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Vehicle Name (optional)</label>
+        <input type="text" id="vehicleName" placeholder="e.g. 2026 Honda CR-V EX-L" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>MSRP (Sticker Price)</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="msrp" placeholder="35000" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Negotiated Selling Price</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="sellingPrice" placeholder="33000" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="sectionTerms">
+    <div class="section-header" onclick="toggleSection('sectionTerms')">
+      Lease Terms <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Term (Months)</label>
+        <div class="quick-buttons" id="termButtons">
+          <button class="quick-btn" onclick="setTerm(24)">24</button>
+          <button class="quick-btn active" onclick="setTerm(36)">36</button>
+          <button class="quick-btn" onclick="setTerm(39)">39</button>
+          <button class="quick-btn" onclick="setTerm(42)">42</button>
+          <button class="quick-btn" onclick="setTerm(48)">48</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Residual Value (%)</label>
+        <div class="input-wrap has-suffix">
+          <input type="number" id="residual" placeholder="55" inputmode="decimal" oninput="calc()" step="0.1">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label>Enter as APR instead of Money Factor</label>
+        <div class="toggle-switch">
+          <input type="checkbox" id="useAPR" onchange="toggleMFMode()">
+          <span class="slider"></span>
+        </div>
+      </div>
+      <div class="field" id="mfField">
+        <label id="mfLabel">Money Factor</label>
+        <div class="input-wrap">
+          <input type="number" id="moneyFactor" placeholder="0.00125" inputmode="decimal" step="0.00001" oninput="calc()">
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px" id="mfHint">
+          Equivalent APR: <span id="mfEquiv">--</span>%
+        </div>
+      </div>
+      <div class="field">
+        <label>Annual Mileage Allowance</label>
+        <div class="quick-buttons" id="mileButtons">
+          <button class="quick-btn active" onclick="setMiles(10000)">10K</button>
+          <button class="quick-btn" onclick="setMiles(12000)">12K</button>
+          <button class="quick-btn" onclick="setMiles(15000)">15K</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section collapsed" id="sectionFees">
+    <div class="section-header" onclick="toggleSection('sectionFees')">
+      Fees &amp; Credits <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Down Payment / Cap Cost Reduction</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="downPayment" value="0" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Trade-In Value</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="tradeIn" value="0" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Manufacturer Rebates / Incentives</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="rebates" value="0" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Acquisition Fee</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="acqFee" value="695" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Doc / Dealer Fee</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="docFee" value="799" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>Other Fees (Dealer Add-ons)</label>
+        <div class="input-wrap has-prefix">
+          <span class="prefix">$</span>
+          <input type="number" id="otherFees" value="0" inputmode="numeric" oninput="calc()">
+        </div>
+      </div>
+      <div class="field">
+        <label>FL County Surtax Rate</label>
+        <div class="input-wrap has-suffix">
+          <input type="number" id="surtax" value="1.0" inputmode="decimal" step="0.5" oninput="calc()">
+          <span class="suffix">%</span>
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px">
+          Total tax: <span id="totalTaxRate">7.0</span>% (6% state + county surtax)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="breakdown" id="breakdownSection">
+    <h3>Payment Breakdown</h3>
+    <div class="breakdown-row">
+      <span class="label">Gross Cap Cost</span>
+      <span id="bdGrossCap">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Cap Cost Reductions</span>
+      <span id="bdCapReductions">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Net Cap Cost</span>
+      <span id="bdNetCap">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Residual Value</span>
+      <span id="bdResidual">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Depreciation / mo</span>
+      <span id="bdDeprec">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Finance Charge / mo</span>
+      <span id="bdFinance">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Base Payment</span>
+      <span id="bdBase">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Tax / mo</span>
+      <span id="bdTax">$--</span>
+    </div>
+    <div class="breakdown-row total">
+      <span class="label">Monthly Payment</span>
+      <span id="bdMonthly">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Total Lease Cost</span>
+      <span id="bdTotalCost">$--</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Discount off MSRP</span>
+      <span id="bdDiscount">--%</span>
+    </div>
+    <div class="breakdown-row">
+      <span class="label">Cost per Mile</span>
+      <span id="bdCostMile">$--</span>
+    </div>
+  </div>
+
+  <div class="tips">
+    <h3>Negotiation Quick Tips</h3>
+    <div class="tip">Negotiate the <strong>selling price</strong> first, just like buying. Never start with monthly payment.</div>
+    <div class="tip">Ask the dealer for the <strong>"buy rate" money factor</strong>. They can mark it up &mdash; check Edmunds forums for the base rate.</div>
+    <div class="tip"><strong>Residual value is not negotiable</strong> &mdash; it's set by the bank/manufacturer. Higher residual = lower payment.</div>
+    <div class="tip">Ask if the <strong>acquisition fee</strong> can be waived or reduced, especially on luxury brands.</div>
+    <div class="tip">Putting <strong>$0 down</strong> is usually smarter &mdash; if the car is totaled, you lose your down payment. GAP insurance covers the lease balance.</div>
+    <div class="tip">Check manufacturer websites for <strong>current incentives and rebates</strong> before going to the dealer.</div>
+    <div class="tip">The <strong>1% rule</strong>: a monthly payment at or below 1% of MSRP (pre-tax, $0 down) is a good deal. Below 0.8% is excellent.</div>
+    <div class="tip">Use the <strong>"Save Deal"</strong> button to compare offers from different dealers side by side.</div>
+  </div>
+
+</div>
+
+<div class="compare-bar">
+  <button class="compare-btn" onclick="clearForm()">Clear</button>
+  <button class="compare-btn primary" onclick="saveDeal()">Save Deal</button>
+</div>
+
+<script>
+let term = 36;
+let annualMiles = 10000;
+let savedDeals = [];
+
+try {
+  const stored = localStorage.getItem('leaseDeals');
+  if (stored) { savedDeals = JSON.parse(stored); renderSavedDeals(); }
+} catch(e) {}
+
+function $(id) { return document.getElementById(id); }
+function num(id) { return parseFloat($(id).value) || 0; }
+function fmt(n) { return n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
+
+function toggleSection(id) {
+  $(id).classList.toggle('collapsed');
+}
+
+function setTerm(t) {
+  term = t;
+  document.querySelectorAll('#termButtons .quick-btn').forEach(function(b) {
+    b.classList.toggle('active', parseInt(b.textContent) === t);
+  });
+  calc();
+}
+
+function setMiles(m) {
+  annualMiles = m;
+  document.querySelectorAll('#mileButtons .quick-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent === (m / 1000) + 'K');
+  });
+  calc();
+}
+
+function toggleMFMode() {
+  var useAPR = $('useAPR').checked;
+  $('mfLabel').textContent = useAPR ? 'APR (%)' : 'Money Factor';
+  $('moneyFactor').placeholder = useAPR ? '3.0' : '0.00125';
+  $('moneyFactor').step = useAPR ? '0.1' : '0.00001';
+  $('moneyFactor').value = '';
+  var hint = $('mfHint');
+  hint.innerHTML = useAPR
+    ? 'Equivalent MF: <span id="mfEquiv">--</span>'
+    : 'Equivalent APR: <span id="mfEquiv">--</span>%';
+  calc();
+}
+
+function getMoneyFactor() {
+  var raw = num('moneyFactor');
+  return $('useAPR').checked ? raw / 2400 : raw;
+}
+
+function calc() {
+  var msrp = num('msrp');
+  var selling = num('sellingPrice');
+  var residualPct = num('residual');
+  var mf = getMoneyFactor();
+  var down = num('downPayment');
+  var trade = num('tradeIn');
+  var rebates = num('rebates');
+  var acqFee = num('acqFee');
+  var docFee = num('docFee');
+  var otherFees = num('otherFees');
+  var surtax = num('surtax');
+  var taxRate = (6 + surtax) / 100;
+
+  $('totalTaxRate').textContent = (6 + surtax).toFixed(1);
+
+  if ($('useAPR').checked) {
+    $('mfEquiv').textContent = mf > 0 ? mf.toFixed(6) : '--';
+  } else {
+    $('mfEquiv').textContent = mf > 0 ? (mf * 2400).toFixed(2) : '--';
+  }
+
+  if (!msrp || !selling || !residualPct || !mf) {
+    resetDisplay();
+    return;
+  }
+
+  var residualValue = msrp * (residualPct / 100);
+  var grossCap = selling + acqFee + docFee + otherFees;
+  var capReductions = down + trade + rebates;
+  var netCap = grossCap - capReductions;
+  var depreciation = (netCap - residualValue) / term;
+  var financeCharge = (netCap + residualValue) * mf;
+  var basePayment = depreciation + financeCharge;
+  var monthlyTax = basePayment * taxRate;
+  var monthlyPayment = basePayment + monthlyTax;
+  var totalCost = (monthlyPayment * term) + down;
+  var totalMiles = annualMiles * (term / 12);
+  var costPerMile = totalCost / totalMiles;
+  var discountPct = ((msrp - selling) / msrp) * 100;
+  var effectiveAPR = mf * 2400;
+
+  // 1% rule benchmark: what payment would be with $0 down for fair comparison
+  var netCapZeroDown = grossCap - trade - rebates;
+  var depZeroDown = (netCapZeroDown - residualValue) / term;
+  var finZeroDown = (netCapZeroDown + residualValue) * mf;
+  var baseZeroDown = depZeroDown + finZeroDown;
+  var pctOfMSRP = (baseZeroDown / msrp) * 100;
+
+  var score, scoreText, scoreColor;
+  if (pctOfMSRP <= 0.7) { score = 'A+'; scoreText = 'Exceptional deal'; scoreColor = 'var(--green)'; }
+  else if (pctOfMSRP <= 0.85) { score = 'A'; scoreText = 'Excellent deal'; scoreColor = 'var(--green)'; }
+  else if (pctOfMSRP <= 1.0) { score = 'B+'; scoreText = 'Good deal'; scoreColor = 'var(--green)'; }
+  else if (pctOfMSRP <= 1.15) { score = 'B'; scoreText = 'Fair deal'; scoreColor = 'var(--yellow)'; }
+  else if (pctOfMSRP <= 1.3) { score = 'C'; scoreText = 'Below average'; scoreColor = 'var(--orange)'; }
+  else { score = 'D'; scoreText = 'Poor value \u2014 negotiate harder'; scoreColor = 'var(--red)'; }
+
+  var aprClass = effectiveAPR <= 4.8 ? 'good' : effectiveAPR <= 7.2 ? 'fair' : 'poor';
+  var pctClass = pctOfMSRP <= 1.0 ? 'good' : pctOfMSRP <= 1.2 ? 'fair' : 'poor';
+
+  $('scoreCard').style.setProperty('--score-color', scoreColor);
+  $('scoreValue').textContent = score;
+  $('scoreValue').style.color = scoreColor;
+  $('scoreDesc').textContent = scoreText;
+
+  $('metricPayment').textContent = '$' + fmt(monthlyPayment);
+  $('metricPayment').className = 'metric-value';
+
+  $('metricPercent').textContent = pctOfMSRP.toFixed(2) + '%';
+  $('metricPercent').className = 'metric-value ' + pctClass;
+
+  $('metricAPR').textContent = effectiveAPR.toFixed(1) + '%';
+  $('metricAPR').className = 'metric-value ' + aprClass;
+
+  $('metricTotal').textContent = '$' + fmtInt(totalCost);
+  $('metricTotal').className = 'metric-value';
+
+  $('bdGrossCap').textContent = '$' + fmt(grossCap);
+  $('bdCapReductions').textContent = capReductions > 0 ? '-$' + fmt(capReductions) : '$0.00';
+  $('bdNetCap').textContent = '$' + fmt(netCap);
+  $('bdResidual').textContent = '$' + fmt(residualValue);
+  $('bdDeprec').textContent = '$' + fmt(depreciation);
+  $('bdFinance').textContent = '$' + fmt(financeCharge);
+  $('bdBase').textContent = '$' + fmt(basePayment);
+  $('bdTax').textContent = '$' + fmt(monthlyTax);
+  $('bdMonthly').textContent = '$' + fmt(monthlyPayment);
+  $('bdTotalCost').textContent = '$' + fmtInt(totalCost);
+  $('bdDiscount').textContent = discountPct.toFixed(1) + '%';
+  $('bdCostMile').textContent = '$' + costPerMile.toFixed(3);
+}
+
+function resetDisplay() {
+  $('scoreValue').textContent = '--';
+  $('scoreValue').style.color = 'var(--accent)';
+  $('scoreDesc').textContent = 'Enter deal details below';
+  $('scoreCard').style.setProperty('--score-color', 'var(--accent)');
+  ['metricPayment', 'metricTotal'].forEach(function(id) {
+    $(id).textContent = '$--';
+    $(id).className = 'metric-value';
+  });
+  $('metricPercent').textContent = '--%';
+  $('metricPercent').className = 'metric-value';
+  $('metricAPR').textContent = '--%';
+  $('metricAPR').className = 'metric-value';
+  ['bdGrossCap','bdCapReductions','bdNetCap','bdResidual','bdDeprec','bdFinance',
+   'bdBase','bdTax','bdMonthly','bdTotalCost'].forEach(function(id) { $(id).textContent = '$--'; });
+  $('bdDiscount').textContent = '--%';
+  $('bdCostMile').textContent = '$--';
+}
+
+function saveDeal() {
+  if (!num('msrp')) return;
+  var name = $('vehicleName').value || 'Deal #' + (savedDeals.length + 1);
+  savedDeals.push({
+    name: name,
+    payment: $('metricPayment').textContent,
+    score: $('scoreValue').textContent,
+    scoreColor: getComputedStyle($('scoreValue')).color,
+    pctMSRP: $('metricPercent').textContent,
+    apr: $('metricAPR').textContent,
+    msrp: num('msrp'), selling: num('sellingPrice'),
+    residual: num('residual'), mf: num('moneyFactor'),
+    useAPR: $('useAPR').checked, term: term, annualMiles: annualMiles,
+    down: num('downPayment'), trade: num('tradeIn'),
+    rebates: num('rebates'), acqFee: num('acqFee'),
+    docFee: num('docFee'), otherFees: num('otherFees'),
+    surtax: num('surtax'), vehicleName: $('vehicleName').value,
+    timestamp: new Date().toLocaleTimeString()
+  });
+  try { localStorage.setItem('leaseDeals', JSON.stringify(savedDeals)); } catch(e) {}
+  renderSavedDeals();
+}
+
+function loadDeal(idx) {
+  var d = savedDeals[idx];
+  if (!d) return;
+  $('vehicleName').value = d.vehicleName || '';
+  $('msrp').value = d.msrp;
+  $('sellingPrice').value = d.selling;
+  $('residual').value = d.residual;
+  $('useAPR').checked = d.useAPR || false;
+  toggleMFMode();
+  $('moneyFactor').value = d.mf;
+  setTerm(d.term || 36);
+  setMiles(d.annualMiles || 10000);
+  $('downPayment').value = d.down || 0;
+  $('tradeIn').value = d.trade || 0;
+  $('rebates').value = d.rebates || 0;
+  $('acqFee').value = d.acqFee || 695;
+  $('docFee').value = d.docFee || 799;
+  $('otherFees').value = d.otherFees || 0;
+  $('surtax').value = d.surtax != null ? d.surtax : 1.0;
+  calc();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function deleteDeal(idx) {
+  savedDeals.splice(idx, 1);
+  try { localStorage.setItem('leaseDeals', JSON.stringify(savedDeals)); } catch(e) {}
+  renderSavedDeals();
+}
+
+function renderSavedDeals() {
+  var container = $('savedDeals');
+  if (!savedDeals.length) { container.innerHTML = ''; return; }
+  var html = '<div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:8px">Saved Deals</div>';
+  savedDeals.forEach(function(d, i) {
+    html += '<div class="saved-deal">' +
+      '<div class="deal-info">' +
+        '<div class="deal-name">' + d.name + '</div>' +
+        '<div class="deal-details">' + d.payment + '/mo &middot; ' + d.pctMSRP + ' of MSRP &middot; ' + d.apr + ' APR &middot; ' + d.timestamp + '</div>' +
+      '</div>' +
+      '<div class="deal-score" style="color:' + d.scoreColor + '">' + d.score + '</div>' +
+      '<div class="deal-actions">' +
+        '<button onclick="loadDeal(' + i + ')">Load</button>' +
+        '<button onclick="deleteDeal(' + i + ')">X</button>' +
+      '</div>' +
+    '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function clearForm() {
+  ['msrp','sellingPrice','residual','moneyFactor'].forEach(function(id) { $(id).value = ''; });
+  $('vehicleName').value = '';
+  $('downPayment').value = '0';
+  $('tradeIn').value = '0';
+  $('rebates').value = '0';
+  $('acqFee').value = '695';
+  $('docFee').value = '799';
+  $('otherFees').value = '0';
+  $('surtax').value = '1.0';
+  setTerm(36);
+  setMiles(10000);
+  calc();
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>
