@@ -84,6 +84,9 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{
 input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
 .has-prefix input{padding-left:28px}
 .has-suffix input{padding-right:40px}
+select{cursor:pointer}
+select optgroup{font-weight:700;color:var(--text)}
+select option{font-weight:400;color:var(--text)}
 
 .quick-buttons{display:flex;gap:6px;margin-top:6px}
 .quick-btn{flex:1;padding:8px 4px;font-size:0.8rem;font-weight:600;
@@ -116,9 +119,6 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
 .breakdown-row .label{color:var(--text-muted)}
 .breakdown-row.total .label{color:var(--text)}
 
-.tips{background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px;margin-bottom:12px}
-.tips h3{font-size:0.85rem;font-weight:600;margin-bottom:10px}
 .tip{font-size:0.8rem;color:var(--text-muted);padding:6px 0 6px 20px;
   position:relative;line-height:1.4}
 .tip::before{content:'';position:absolute;left:0;top:12px;
@@ -189,8 +189,51 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
     </div>
     <div class="section-body">
       <div class="field">
+        <label>Quick Fill: Select a Vehicle</label>
+        <select id="presetSelect" onchange="applyPreset(this.value)" style="width:100%;padding:12px;font-size:0.9rem;font-family:var(--font);background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;-webkit-appearance:none;appearance:none">
+          <option value="">-- Choose a vehicle --</option>
+          <optgroup label="VW Atlas">
+            <option value="0">2026 Atlas SE (FWD)</option>
+            <option value="1">2026 Atlas SE w/Tech (FWD)</option>
+            <option value="2">2026 Atlas SEL (AWD)</option>
+          </optgroup>
+          <optgroup label="Hyundai Santa Fe">
+            <option value="3">2026 Santa Fe SE (FWD)</option>
+            <option value="4">2026 Santa Fe SEL (FWD)</option>
+            <option value="5">2026 Santa Fe Limited (FWD)</option>
+          </optgroup>
+          <optgroup label="Hyundai Palisade">
+            <option value="6">2026 Palisade SEL (FWD)</option>
+            <option value="7">2026 Palisade Limited (FWD)</option>
+            <option value="8">2026 Palisade Calligraphy (AWD)</option>
+          </optgroup>
+          <optgroup label="Kia Sorento">
+            <option value="9">2026 Sorento EX (FWD)</option>
+            <option value="10">2026 Sorento X-Line EX (AWD)</option>
+            <option value="11">2026 Sorento X-Line SX-P (AWD)</option>
+          </optgroup>
+          <optgroup label="Mazda CX-90 (AWD)">
+            <option value="12">2026 CX-90 Turbo Select</option>
+            <option value="13">2026 CX-90 Turbo Preferred</option>
+            <option value="14">2026 CX-90 Turbo Premium Sport</option>
+          </optgroup>
+          <optgroup label="Nissan Pathfinder">
+            <option value="15">2026 Pathfinder SV (4WD)</option>
+            <option value="16">2026 Pathfinder SL (4WD)</option>
+            <option value="17">2026 Pathfinder Platinum (4WD)</option>
+          </optgroup>
+        </select>
+        <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">
+          Lease data: Edmunds forums Jul 2026, 36/10K. Verify MF/residual with dealer.
+        </div>
+      </div>
+      <div class="field">
         <label>Vehicle Name (optional)</label>
         <input type="text" id="vehicleName" placeholder="e.g. 2026 Honda CR-V EX-L" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Dealership</label>
+        <input type="text" id="dealership" placeholder="e.g. Gunther VW Coconut Creek">
       </div>
       <div class="field">
         <label>MSRP (Sticker Price)</label>
@@ -373,16 +416,20 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
     </div>
   </div>
 
-  <div class="tips">
-    <h3>Negotiation Quick Tips</h3>
-    <div class="tip">Negotiate the <strong>selling price</strong> first, just like buying. Never start with monthly payment.</div>
-    <div class="tip">Ask the dealer for the <strong>"buy rate" money factor</strong>. They can mark it up &mdash; check Edmunds forums for the base rate.</div>
-    <div class="tip"><strong>Residual value is not negotiable</strong> &mdash; it's set by the bank/manufacturer. Higher residual = lower payment.</div>
-    <div class="tip">Ask if the <strong>acquisition fee</strong> can be waived or reduced, especially on luxury brands.</div>
-    <div class="tip">Putting <strong>$0 down</strong> is usually smarter &mdash; if the car is totaled, you lose your down payment. GAP insurance covers the lease balance.</div>
-    <div class="tip">Check manufacturer websites for <strong>current incentives and rebates</strong> before going to the dealer.</div>
-    <div class="tip">The <strong>1% rule</strong>: a monthly payment at or below 1% of MSRP (pre-tax, $0 down) is a good deal. Below 0.8% is excellent.</div>
-    <div class="tip">Use the <strong>"Save Deal"</strong> button to compare offers from different dealers side by side.</div>
+  <div class="section collapsed" id="sectionTips">
+    <div class="section-header" onclick="toggleSection('sectionTips')">
+      Negotiation Quick Tips <span class="toggle">&#9660;</span>
+    </div>
+    <div class="section-body">
+      <div class="tip">Negotiate the <strong>selling price</strong> first, just like buying. Never start with monthly payment.</div>
+      <div class="tip">Ask the dealer for the <strong>"buy rate" money factor</strong>. They can mark it up &mdash; check Edmunds forums for the base rate.</div>
+      <div class="tip"><strong>Residual value is not negotiable</strong> &mdash; it's set by the bank/manufacturer. Higher residual = lower payment.</div>
+      <div class="tip">Ask if the <strong>acquisition fee</strong> can be waived or reduced, especially on luxury brands.</div>
+      <div class="tip">Putting <strong>$0 down</strong> is usually smarter &mdash; if the car is totaled, you lose your down payment. GAP insurance covers the lease balance.</div>
+      <div class="tip">Check manufacturer websites for <strong>current incentives and rebates</strong> before going to the dealer.</div>
+      <div class="tip">The <strong>1% rule</strong>: a monthly payment at or below 1% of MSRP (pre-tax, $0 down) is a good deal. Below 0.8% is excellent.</div>
+      <div class="tip">Use the <strong>"Save Deal"</strong> button to compare offers from different dealers side by side.</div>
+    </div>
   </div>
 
 </div>
@@ -393,9 +440,30 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
 </div>
 
 <script>
-let term = 36;
-let annualMiles = 10000;
-let savedDeals = [];
+var PRESETS = [
+  {name:'2026 VW Atlas SE (FWD)',msrp:39310,mf:0.00213,res:65,rebate:2000},
+  {name:'2026 VW Atlas SE w/Tech (FWD)',msrp:43730,mf:0.00213,res:64,rebate:2000},
+  {name:'2026 VW Atlas SEL (AWD)',msrp:49620,mf:0.00213,res:63,rebate:2000},
+  {name:'2026 Hyundai Santa Fe SE (FWD)',msrp:35050,mf:0.00225,res:67,rebate:750},
+  {name:'2026 Hyundai Santa Fe SEL (FWD)',msrp:37590,mf:0.00225,res:67,rebate:750},
+  {name:'2026 Hyundai Santa Fe Limited (FWD)',msrp:44600,mf:0.00211,res:65,rebate:750},
+  {name:'2026 Hyundai Palisade SEL (FWD)',msrp:41440,mf:0.00227,res:65,rebate:1750},
+  {name:'2026 Hyundai Palisade Limited (FWD)',msrp:49270,mf:0.00270,res:67,rebate:0},
+  {name:'2026 Hyundai Palisade Calligraphy (AWD)',msrp:56060,mf:0.00271,res:65,rebate:0},
+  {name:'2026 Kia Sorento EX (FWD)',msrp:38490,mf:0.00260,res:68,rebate:2230},
+  {name:'2026 Kia Sorento X-Line EX (AWD)',msrp:42790,mf:0.00260,res:68,rebate:2230},
+  {name:'2026 Kia Sorento X-Line SX-P (AWD)',msrp:46790,mf:0.00251,res:64,rebate:2030},
+  {name:'2026 Mazda CX-90 Turbo Select (AWD)',msrp:39300,mf:0.00162,res:64,rebate:0},
+  {name:'2026 Mazda CX-90 Turbo Preferred (AWD)',msrp:43450,mf:0.00162,res:64,rebate:0},
+  {name:'2026 Mazda CX-90 Turbo Premium Sport (AWD)',msrp:47480,mf:0.00184,res:60,rebate:0},
+  {name:'2026 Nissan Pathfinder SV (4WD)',msrp:41990,mf:0.00143,res:60,rebate:1300},
+  {name:'2026 Nissan Pathfinder SL (4WD)',msrp:44590,mf:0.00143,res:62,rebate:1300},
+  {name:'2026 Nissan Pathfinder Platinum (4WD)',msrp:51790,mf:0.00143,res:62,rebate:1300}
+];
+
+var term = 36;
+var annualMiles = 10000;
+var savedDeals = [];
 
 try {
   const stored = localStorage.getItem('leaseDeals');
@@ -409,6 +477,26 @@ function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
 
 function toggleSection(id) {
   $(id).classList.toggle('collapsed');
+}
+
+function applyPreset(idx) {
+  if (idx === '') return;
+  var p = PRESETS[parseInt(idx)];
+  if (!p) return;
+  $('vehicleName').value = p.name;
+  $('msrp').value = p.msrp;
+  $('sellingPrice').value = '';
+  $('residual').value = p.res;
+  $('useAPR').checked = false;
+  $('mfLabel').textContent = 'Money Factor';
+  $('moneyFactor').placeholder = '0.00125';
+  $('moneyFactor').step = '0.00001';
+  $('mfHint').innerHTML = 'Equivalent APR: <span id="mfEquiv">--</span>%';
+  $('moneyFactor').value = p.mf;
+  $('rebates').value = p.rebate;
+  setTerm(36);
+  setMiles(10000);
+  calc();
 }
 
 function setTerm(t) {
@@ -560,6 +648,7 @@ function saveDeal() {
   var name = $('vehicleName').value || 'Deal #' + (savedDeals.length + 1);
   savedDeals.push({
     name: name,
+    dealership: $('dealership').value,
     payment: $('metricPayment').textContent,
     score: $('scoreValue').textContent,
     scoreColor: getComputedStyle($('scoreValue')).color,
@@ -576,12 +665,14 @@ function saveDeal() {
   });
   try { localStorage.setItem('leaseDeals', JSON.stringify(savedDeals)); } catch(e) {}
   renderSavedDeals();
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 function loadDeal(idx) {
   var d = savedDeals[idx];
   if (!d) return;
   $('vehicleName').value = d.vehicleName || '';
+  $('dealership').value = d.dealership || '';
   $('msrp').value = d.msrp;
   $('sellingPrice').value = d.selling;
   $('residual').value = d.residual;
@@ -615,7 +706,7 @@ function renderSavedDeals() {
     html += '<div class="saved-deal">' +
       '<div class="deal-info">' +
         '<div class="deal-name">' + d.name + '</div>' +
-        '<div class="deal-details">' + d.payment + '/mo &middot; ' + d.pctMSRP + ' of MSRP &middot; ' + d.apr + ' APR &middot; ' + d.timestamp + '</div>' +
+        '<div class="deal-details">' + (d.dealership ? d.dealership + ' &middot; ' : '') + d.payment + '/mo &middot; ' + d.pctMSRP + ' of MSRP &middot; ' + d.apr + ' APR &middot; ' + d.timestamp + '</div>' +
       '</div>' +
       '<div class="deal-score" style="color:' + d.scoreColor + '">' + d.score + '</div>' +
       '<div class="deal-actions">' +
@@ -630,6 +721,8 @@ function renderSavedDeals() {
 function clearForm() {
   ['msrp','sellingPrice','residual','moneyFactor'].forEach(function(id) { $(id).value = ''; });
   $('vehicleName').value = '';
+  $('dealership').value = '';
+  $('presetSelect').value = '';
   $('downPayment').value = '0';
   $('tradeIn').value = '0';
   $('rebates').value = '0';
